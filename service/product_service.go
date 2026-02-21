@@ -2,7 +2,11 @@ package service
 
 import (
 	"context"
+	"errors"
 
+	"gorm.io/gorm"
+
+	customerrors "github.com/rhodamineb13/backend-test/errors"
 	"github.com/rhodamineb13/backend-test/models/dtos"
 	"github.com/rhodamineb13/backend-test/models/entities"
 	"github.com/rhodamineb13/backend-test/repository"
@@ -51,7 +55,11 @@ func (ps *productService) ListProducts(ctx context.Context, name string, categor
 func (ps *productService) GetProductByID(ctx context.Context, id uint) (*dtos.Product, error) {
 	product, err := ps.productRepo.GetProductByID(ctx, id)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, customerrors.ErrNotFound(err)
+		} else {
+			return nil, customerrors.ErrUnexpected(err)
+		}
 	}
 
 	return &dtos.Product{

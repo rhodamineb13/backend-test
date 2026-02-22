@@ -30,6 +30,8 @@ func NewProductRepository(db *gorm.DB) IProductRepository {
 func (ps *productRepository) ListProducts(ctx context.Context, name string, category uint, price float32, stock_quantity uint) ([]entities.Product, error) {
 	key := "LIST_PRODUCTS"
 	var products []entities.Product
+
+	// Check from cache first, then get from the database
 	b, err := ps.rc.Get(ctx, key).Bytes()
 	if err == nil {
 		if errJSON := json.Unmarshal(b, &products); errJSON != nil {
@@ -79,18 +81,42 @@ func (ps *productRepository) GetProductByID(ctx context.Context, id uint) (*enti
 
 func (ps *productRepository) InsertNewProduct(ctx context.Context, data entities.Product) error {
 	return ps.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Create(&data).Error
+		if err := tx.Create(&data).Error; err != nil {
+			return err
+		}
+
+		// Deletes cache since there's change in the database
+		if err := ps.rc.Del(ctx, "LIST_PRODUCTS").Err(); err != nil {
+			return err
+		}
+		return nil
 	})
 }
 
 func (ps *productRepository) UpdateProduct(ctx context.Context, id uint, data entities.Product) error {
 	return ps.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Save(&data).Error
+		if err := tx.Save(&data).Error; err != nil {
+			return err
+		}
+
+		// Deletes cache since there's change in the database
+		if err := ps.rc.Del(ctx, "LIST_PRODUCTS").Err(); err != nil {
+			return err
+		}
+		return nil
 	})
 }
 
 func (ps *productRepository) DeleteProduct(ctx context.Context, id uint) error {
 	return ps.db.Transaction(func(tx *gorm.DB) error {
-		return tx.Where("id = ?", id).Delete(&entities.Product{}).Error
+		if err := tx.Where("id = ?", id).Delete(&entities.Product{}).Error; err != nil {
+			return err
+		}
+
+		// Deletes cache since there's change in the database
+		if err := ps.rc.Del(ctx, "LIST_PRODUCTS").Err(); err != nil {
+			return err
+		}
+		return nil
 	})
 }

@@ -16,8 +16,8 @@ type Product struct {
 }
 
 type ProductResponse struct {
-	NumberOfProducts uint      `json:"number_of_products"`
-	TotalStock       uint      `json:"total_stock"`
-	AveragePrice     uint      `json:"average_price"`
+	NumberOfProducts int       `json:"number_of_products"`
+	TotalStock       int       `json:"total_stock"`
+	AveragePrice     float32   `json:"average_price"`
 	ProductDetails   []Product `json:"product_details"`
 }

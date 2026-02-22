@@ -13,7 +13,7 @@ import (
 )
 
 type IProductService interface {
-	ListProducts(ctx context.Context, name string, category uint, price float32, stock_quantity uint) ([]dtos.Product, error)
+	ListProducts(ctx context.Context, name string, category uint, price float32, stock_quantity, limit, offset uint) (*dtos.ProductResponse, error)
 	GetProductByID(ctx context.Context, id uint) (*dtos.Product, error)
 	InsertNewProduct(ctx context.Context, data dtos.Product) error
 	UpdateProduct(ctx context.Context, id uint, data dtos.Product) error
@@ -28,28 +28,34 @@ func NewProductService(productRepo repository.IProductRepository) IProductServic
 	return &productService{productRepo: productRepo}
 }
 
-func (ps *productService) ListProducts(ctx context.Context, name string, category uint, price float32, stock_quantity uint) ([]dtos.Product, error) {
-	productsEntity, err := ps.productRepo.ListProducts(ctx, name, category, price, stock_quantity)
+func (ps *productService) ListProducts(ctx context.Context, name string, category uint, price float32, stock_quantity uint, limit, offset uint) (*dtos.ProductResponse, error) {
+	productsRes, err := ps.productRepo.ListProducts(ctx, name, category, price, stock_quantity, limit, offset)
 	if err != nil {
-		return nil, err
+		return nil, customerrors.ErrUnexpected(err)
 	}
 
-	productsDto := make([]dtos.Product, len(productsEntity))
-	for i := range productsEntity {
-		productsDto[i] = dtos.Product{
-			Id:            productsEntity[i].Id,
-			Name:          productsEntity[i].Name,
-			Price:         productsEntity[i].Price,
-			StockQuantity: productsEntity[i].StockQuantity,
-			CreatedAt:     &productsEntity[i].CreatedAt,
+	dashboardProduct := &dtos.ProductResponse{
+		TotalStock:       int(productsRes.TotalStock),
+		NumberOfProducts: int(productsRes.TotalProducts),
+		AveragePrice:     productsRes.AveragePrice,
+	}
+
+	dashboardProduct.ProductDetails = make([]dtos.Product, len(productsRes.Products))
+	for i, prod := range productsRes.Products {
+		dashboardProduct.ProductDetails[i] = dtos.Product{
+			Id:            prod.Id,
+			Name:          prod.Name,
+			Description:   prod.Description,
+			StockQuantity: prod.StockQuantity,
+			Price:         prod.Price,
 			Category: dtos.Category{
-				Id:   productsEntity[i].Category.Id,
-				Name: productsEntity[i].Category.Name,
+				Id:   prod.CategoryId,
+				Name: prod.Category.Name,
 			},
 		}
 	}
 
-	return productsDto, nil
+	return dashboardProduct, nil
 }
 
 func (ps *productService) GetProductByID(ctx context.Context, id uint) (*dtos.Product, error) {

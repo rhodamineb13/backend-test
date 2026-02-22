@@ -9,8 +9,8 @@ import (
 
 var (
 	MySQLURL      = AddEnvVariable("MYSQL_URL", "")
-	RedisUsername = AddEnvVariable("REDIS_USERNAME", "admin")
-	RedisPassword = AddEnvVariable("REDIS_PASSWORD", "admin")
+	RedisUsername = AddEnvVariable("REDIS_USERNAME", "")
+	RedisPassword = AddEnvVariable("REDIS_PASSWORD", "")
 )
 
 func AddEnvVariable(variable, fallback string) string {

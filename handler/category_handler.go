@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 
+	customerrors "github.com/rhodamineb13/backend-test/errors"
 	"github.com/rhodamineb13/backend-test/models/dtos"
 	"github.com/rhodamineb13/backend-test/service"
 )
@@ -22,6 +23,7 @@ func NewCategoryHandler(categoryService service.ICategoryService) *CategoryHandl
 func (ch *CategoryHandler) ListCategories(c *gin.Context) {
 	categories, err := ch.categoryService.ListCategories(c)
 	if err != nil {
+		c.Error(err)
 		return
 	}
 
@@ -32,11 +34,14 @@ func (ch *CategoryHandler) GetCategoryByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
+		wrappedErr := customerrors.ErrBadRequest(err)
+		c.Error(wrappedErr)
 		return
 	}
 
 	category, err := ch.categoryService.GetCategoryByID(c, uint(id))
 	if err != nil {
+		c.Error(err)
 		return
 	}
 
@@ -46,10 +51,13 @@ func (ch *CategoryHandler) GetCategoryByID(c *gin.Context) {
 func (ch *CategoryHandler) InsertNewCategory(c *gin.Context) {
 	var category dtos.Category
 	if err := c.ShouldBindJSON(&category); err != nil {
+		wrappedErr := customerrors.ErrBadRequest(err)
+		c.Error(wrappedErr)
 		return
 	}
 
 	if err := ch.categoryService.InsertNewCategory(c, category); err != nil {
+		c.Error(err)
 		return
 	}
 

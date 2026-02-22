@@ -27,7 +27,7 @@ func NewCategoryService(categoryRepo repository.ICategoryRepository) ICategorySe
 }
 
 func (cs *categoryService) ListCategories(ctx context.Context) ([]dtos.Category, error) {
-	categories, err := cs.ListCategories(ctx)
+	categories, err := cs.categoryRepo.ListCategories(ctx)
 	if err != nil {
 		return nil, customerrors.ErrUnexpected(err)
 	}

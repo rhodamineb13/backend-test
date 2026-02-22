@@ -84,7 +84,7 @@ func (ps *productService) InsertNewProduct(ctx context.Context, data dtos.Produc
 	}
 
 	if err := ps.productRepo.InsertNewProduct(ctx, input); err != nil {
-		return err
+		return customerrors.ErrUnexpected(err)
 	}
 
 	return nil
@@ -93,7 +93,10 @@ func (ps *productService) InsertNewProduct(ctx context.Context, data dtos.Produc
 func (ps *productService) UpdateProduct(ctx context.Context, id uint, data dtos.Product) error {
 	product, err := ps.productRepo.GetProductByID(ctx, id)
 	if err != nil {
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return customerrors.ErrNotFound(err)
+		}
+		return customerrors.ErrUnexpected(err)
 	}
 	if data.Name != "" {
 		product.Name = data.Name
@@ -105,14 +108,17 @@ func (ps *productService) UpdateProduct(ctx context.Context, id uint, data dtos.
 		product.Price = data.Price
 	}
 	if err := ps.productRepo.UpdateProduct(ctx, id, *product); err != nil {
-		return err
+		return customerrors.ErrUnexpected(err)
 	}
 	return nil
 }
 
 func (ps *productService) DeleteProduct(ctx context.Context, id uint) error {
 	if err := ps.productRepo.DeleteProduct(ctx, id); err != nil {
-		return err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return customerrors.ErrNotFound(err)
+		}
+		return customerrors.ErrUnexpected(err)
 	}
 	return nil
 }

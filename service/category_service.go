@@ -2,7 +2,11 @@ package service
 
 import (
 	"context"
+	"errors"
 
+	"gorm.io/gorm"
+
+	customerrors "github.com/rhodamineb13/backend-test/errors"
 	"github.com/rhodamineb13/backend-test/models/dtos"
 	"github.com/rhodamineb13/backend-test/models/entities"
 	"github.com/rhodamineb13/backend-test/repository"
@@ -25,7 +29,7 @@ func NewCategoryService(categoryRepo repository.ICategoryRepository) ICategorySe
 func (cs *categoryService) ListCategories(ctx context.Context) ([]dtos.Category, error) {
 	categories, err := cs.ListCategories(ctx)
 	if err != nil {
-		return nil, err
+		return nil, customerrors.ErrUnexpected(err)
 	}
 	categoriesRes := make([]dtos.Category, len(categories))
 	for i := range categories {
@@ -40,7 +44,10 @@ func (cs *categoryService) ListCategories(ctx context.Context) ([]dtos.Category,
 func (cs *categoryService) GetCategoryByID(ctx context.Context, id uint) (*dtos.Category, error) {
 	category, err := cs.categoryRepo.GetCategoryByID(ctx, id)
 	if err != nil {
-		return nil, err
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, customerrors.ErrNotFound(err)
+		}
+		return nil, customerrors.ErrUnexpected(err)
 	}
 	return &dtos.Category{
 		Id:   category.Id,
@@ -55,7 +62,7 @@ func (cs *categoryService) InsertNewCategory(ctx context.Context, data dtos.Cate
 	}
 
 	if err := cs.categoryRepo.InsertNewCategory(ctx, input); err != nil {
-		return err
+		return customerrors.ErrUnexpected(err)
 	}
 	return nil
 }

@@ -1,4 +1,5 @@
 # backend-test
+https://github.com/rhodamineb13/backend-test
 
 ## 1. Overview
 
@@ -37,3 +38,4 @@ In database I use integer as the primary key for both products and categories ta
 
 On products table, indexing is done on both `category_id` column and `id` column, with `category_id` is having more priority than `id` so that the search is done by looking up the `category_id` first.
 
+I also implement caching so frequent lookup on data will not result in multiple call to database. Instead it will look up on the cache first on Redis using the given key. This reduces the request/response time.
